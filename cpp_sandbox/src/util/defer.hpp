@@ -1,5 +1,5 @@
-#ifndef WRAP_HPP_
-#define WRAP_HPP_
+#ifndef DEFER_HPP_
+#define DEFER_HPP_
 
 // std::function()
 #include <functional>
@@ -40,4 +40,4 @@ namespace mdt
    };
 }
 
-#endif /* WRAP_HPP_ */
+#endif /* DEFER_HPP_ */
