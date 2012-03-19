@@ -93,7 +93,11 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
       std::vector<std::string> input(INPUT);
       std::list  <std::string> output;
 
-      mdt::pending_queue<std::string> q([&](std::string s){output.push_back(std::move(s));});
+      // create a new pending queue which appends to 'output'
+      mdt::pending_queue<std::string> o([&](std::string s){output.push_back(std::move(s));});
+
+      // ensure that the queue can be moved
+      auto q = std::move(o);
 
       // add some stuff before starting the queue thread
       for(auto i : input) q.add(i);
@@ -247,7 +251,11 @@ namespace mdt { namespace test { namespace pending_queue { namespace ints
       std::vector<int> input(INPUT);
       std::list  <int> output;
 
-      mdt::pending_queue<int> q([&](int i){output.push_back(i);});
+      // create a new pending queue which appends to 'output'
+      mdt::pending_queue<int> o([&](int i){output.push_back(i);});
+
+      // ensure that the queue can be moved
+      auto q = std::move(o);
 
       // add some stuff before starting the queue thread
       for(auto i : input) q.add(i);

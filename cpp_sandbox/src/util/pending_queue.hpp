@@ -60,11 +60,11 @@ namespace mdt
       ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// Type Definitions ///
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-      // the type of this templated class, provided for cases in which the type is difficult to deduce
-      public: typedef pending_queue<T> class_type;
-
       // stored element type, provided for cases in which the type is difficult to deduce
       public: typedef T element_type;
+
+      // the type of this templated class, provided for cases in which the type is difficult to deduce
+      public: typedef pending_queue<element_type> class_type;
 
 
       ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +78,43 @@ namespace mdt
          ending{false},
          paused{false}
       {}
+
+      // disallow copying via copy constructor
+      public: pending_queue(class_type const &) = delete;
+
+      // disallow copying via assignment operator
+      public: class_type & operator=(class_type const &) = delete;
+
+      // move via move constructor
+      public: pending_queue(class_type &&other)
+         :
+         // copy the trivial types
+         ending{other.ending},
+         paused{other.paused}
+      {
+         // swap the complex types
+         queue.swap(other.queue);
+         callback.swap(other.callback);
+         thread.swap(other.thread);
+      }
+
+      // move via assignment operator
+      public: class_type & operator=(class_type &&other)
+      {
+         // copy the trivial types
+         ending = other.ending;
+         paused = other.paused;
+
+         // swap the complex types
+         queue.swap(other.queue);
+         callback.swap(other.callback);
+         thread.swap(other.thread);
+
+         return *this;
+      }
+
+      // empty destructor
+      public: ~pending_queue() {}
 
       // create a 'defer' instance which will call end() when it goes out of scope
       public: auto go() -> defer
