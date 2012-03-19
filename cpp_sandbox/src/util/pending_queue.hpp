@@ -93,25 +93,13 @@ namespace mdt
          paused{other.paused}
       {
          // swap the complex types
-         queue.swap(other.queue);
+         queue   .swap(other.queue);
          callback.swap(other.callback);
-         thread.swap(other.thread);
+         thread  .swap(other.thread);
       }
 
-      // move via assignment operator
-      public: class_type & operator=(class_type &&other)
-      {
-         // copy the trivial types
-         ending = other.ending;
-         paused = other.paused;
-
-         // swap the complex types
-         queue.swap(other.queue);
-         callback.swap(other.callback);
-         thread.swap(other.thread);
-
-         return *this;
-      }
+      // disallow move via assignment operator (because we don't offer an empty constructor)
+      public: class_type & operator=(class_type &&) = delete;
 
       // empty destructor
       public: ~pending_queue() {}
