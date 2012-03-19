@@ -46,14 +46,17 @@ namespace mdt { namespace test
    // set a failure result
    static void failure(std::string const &description)
    {
+      // construct a new failure result at the back of current_results
       current_results.emplace_back(description, false);
 
+      // the overall testing status has now failed
       current_status = false;
    }
 
    // set a success result
    static void success(std::string const &description)
    {
+      // construct a new success result at the back of the current_reuslts
       current_results.emplace_back(description, true);
    }
 
