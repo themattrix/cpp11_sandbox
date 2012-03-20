@@ -9,26 +9,37 @@
 // mdt::pending_queue
 #include "../util/pending_queue.hpp"
 
+// string helper functions
+#include "../util/string.hpp"
+
 namespace mdt { namespace test
 {
    void output_all()
    {
-      using namespace mdt::test::pending_queue;
-
-      all();
-
-      std::cout << (passed() ? ">>> passed self-test(s):" : ">>> FAILED self-test(s):") << std::endl;
-
-      if(results().empty())
       {
-         std::cout << "   (NONE)" << std::endl;
-      }
-      else
-      {
-         for(auto const &i : results())
+         using namespace mdt::test::pending_queue;
+
+         all();
+
+         std::cout << (passed() ? ">>> passed self-test(s):" : ">>> FAILED self-test(s):") << std::endl;
+
+         if(results().empty())
          {
-            std::cout << "   " << i.to_string() << std::endl;
+            std::cout << "   (NONE)" << std::endl;
          }
+         else
+         {
+            for(auto const &i : results())
+            {
+               std::cout << "   " << i.to_string() << std::endl;
+            }
+         }
+      }
+
+      {
+         using namespace mdt::test::string;
+
+         all();
       }
    }
 }}

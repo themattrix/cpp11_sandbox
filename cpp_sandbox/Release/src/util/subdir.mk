@@ -4,13 +4,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/util/pending_queue.cpp 
+../src/util/pending_queue.cpp \
+../src/util/string.cpp 
 
 OBJS += \
-./src/util/pending_queue.o 
+./src/util/pending_queue.o \
+./src/util/string.o 
 
 CPP_DEPS += \
-./src/util/pending_queue.d 
+./src/util/pending_queue.d \
+./src/util/string.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
