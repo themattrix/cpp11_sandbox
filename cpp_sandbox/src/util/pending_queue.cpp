@@ -31,50 +31,15 @@
 ///                                                                                                                                               ///
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////// static variables and helper functions ///
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 namespace mdt { namespace test
 {
-   // records the status of the tests run so far
-   static bool current_status = true;
-
-   // records the current results
-   static std::list<mdt::test::result> current_results;
-
-   // set a failure result
-   static void failure(std::string const &description)
-   {
-      // construct a new failure result at the back of current_results
-      current_results.emplace_back(description, false);
-
-      // the overall testing status has now failed
-      current_status = false;
-   }
-
-   // set a success result
-   static void success(std::string const &description)
-   {
-      // construct a new success result at the back of the current_reuslts
-      current_results.emplace_back(description, true);
-   }
-
-   // if condition is true, add a 'success' result, otherwise add a 'failure'
-   static void ensure(bool condition, std::string const &description)
-   {
-      if(condition) success(description);
-      else          failure(description);
-   }
-
-   // ensure that the contents of two containers are equal
+   // returns true if the two containers have identical contents
    template<typename Ta, typename Tb>
-   static void ensure_equal_containers(Ta const &a, Tb const &b, std::string const &description)
+   auto equal_containers(Ta const &a, Tb const &b) -> bool
    {
-      ensure(a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin()), description);
+      return (a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin()));
    }
 }}
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////// pending_queue<std::string> tests ///
@@ -88,8 +53,10 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
       "testing", "this", "rather", "fine", "looking", "pending_queue"
    };
 
-   static void all()
+   static auto all() -> test::result
    {
+      test::result result("std::string tests");
+
       std::vector<std::string> input(INPUT);
       std::list  <std::string> output;
 
@@ -103,10 +70,10 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
       for(auto i : input) q.add(i);
 
       // ensure that the output queue is empty (to verify that the call-back is not called synchronously)
-      ensure(output.empty(), "strings: asynchronous call-back");
+      result << test::result{"asynchronous call-back", output.empty()};
 
       // ensure that the input has not changed contents
-      ensure_equal_containers(input, INPUT, "strings: add from a container doesn't change the container");
+      result << test::result{"add from a container doesn't change the container", equal_containers(input, INPUT)};
 
       {
          // start the queue thread
@@ -121,7 +88,7 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
             q.sync();
 
             // ensure that the output is now equal to the input
-            ensure_equal_containers(input, output, "strings: add -> start thread -> sync = flushed output");
+            result << test::result{"add -> start thread -> sync = flushed output", equal_containers(input, output)};
 
             // clear the output for the next test
             output.clear();
@@ -139,7 +106,7 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
             q.sync();
 
             // ensure that the output is again equal to the input
-            ensure_equal_containers(input, output, "strings: start thread -> add -> sync = flushed output");
+            result << test::result{"start thread -> add -> sync = flushed output", equal_containers(input, output)};
 
             // clear the output for the next test
             output.clear();
@@ -157,7 +124,7 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
             for(auto i : input) q.add(i);
 
             // ensure that the output queue has not had anything added to it yet
-            ensure(output.empty(), "strings: start thread -> pause -> add = no output");
+            result << test::result{"start thread -> pause -> add = no output", output.empty()};
 
             // un-pause the queue
             q.pause(false);
@@ -166,7 +133,7 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
             q.sync();
 
             // ensure that the output is again equal to the input
-            ensure_equal_containers(input, output, "strings: start thread -> pause -> add -> un-pause -> sync = flushed output");
+            result << test::result{"start thread -> pause -> add -> un-pause -> sync = flushed output", equal_containers(input, output)};
 
             // clear the output for the next test
             output.clear();
@@ -187,13 +154,13 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
       }
 
       // ensure that the output is again equal to the input
-      ensure_equal_containers(input, output, "strings: start thread -> add -> pause -> stop thread = flushed output");
+      result << test::result{"start thread -> add -> pause -> stop thread = flushed output", equal_containers(input, output)};
 
       // clear the output for the next test
       output.clear();
 
       /**
-       ** (5) Ensure that re-starting the queue thread from the same parent thread works, and that adding elements, not synchronizing,
+       ** (5) Ensure that re-starting the queue thread from the same parent thread works, and then adding elements, not synchronizing,
        **     and stopping the thread results in the elements being processed.
        **/
       {
@@ -207,7 +174,7 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
       }
 
       // ensure that the output is now equal to the input
-      ensure_equal_containers(input, output, "strings: restart thread -> add -> stop thread = flushed output");
+      result << test::result{"restart thread -> add -> stop thread = flushed output", equal_containers(input, output)};
 
       // clear the output for the next test
       output.clear();
@@ -220,16 +187,18 @@ namespace mdt { namespace test { namespace pending_queue { namespace strings
          // attempt to add some more stuff
          for(auto i : input) q.add(i);
 
-         failure("strings: adding to a stopped queue should have thrown an exception");
+         result << test::result{"adding to a stopped queue should have thrown an exception", false};
       }
       catch(std::string const &e)
       {
-         ensure(e == input[0], "strings: adding to a stopped queue should throw the first element added after stopping");
+         result << test::result{"adding to a stopped queue should throw the first element added after stopping", e == input[0]};
       }
       catch(...)
       {
-         failure("strings: caught wrong exception type (should be 'std::string')");
+         result << test::result{"caught wrong exception type (should be 'std::string')", false};
       }
+
+      return result;
    }
 }}}}
 
@@ -246,8 +215,10 @@ namespace mdt { namespace test { namespace pending_queue { namespace ints
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9
    };
 
-   static void all()
+   static auto all() -> test::result
    {
+      test::result result("integer tests");
+
       std::vector<int> input(INPUT);
       std::list  <int> output;
 
@@ -261,23 +232,21 @@ namespace mdt { namespace test { namespace pending_queue { namespace ints
       for(auto i : input) q.add(i);
 
       // ensure that the output queue is empty (to verify that the call-back is not called synchronously)
-      ensure(output.empty(), "integers: asynchronous call-back");
+      result << test::result{"asynchronous call-back", output.empty()};
 
       // ensure that the input has not changed contents
-      ensure_equal_containers(input, INPUT, "integers: adding from a container doesn't change the container");
+      result << test::result{"adding from a container doesn't change the container", equal_containers(input, INPUT)};
 
       /**
        ** (1) Ensure that starting and stopping the queue thread acts like a synchronization.
        **/
       {
-         // start the queue thread
+         // start and end the queue thread
          local(q.go());
-
-         // end the queue thread
       }
 
       // ensure that the output is now equal to the input
-      ensure_equal_containers(input, output, "integers: restart thread -> add -> stop thread = flushed output");
+      result << test::result{"restart thread -> add -> stop thread = flushed output", equal_containers(input, output)};
 
       // clear the output for the next test
       output.clear();
@@ -290,19 +259,20 @@ namespace mdt { namespace test { namespace pending_queue { namespace ints
          // attempt to add some more stuff
          for(auto i : input) q.add(i);
 
-         failure("integers: adding to a stopped queue should have thrown an exception");
+         result << test::result{"adding to a stopped queue should have thrown an exception", false};
       }
       catch(int e)
       {
-         ensure(e == input[0], "integers: adding to a stopped queue should throw the first element added after stopping");
+         result << test::result{"adding to a stopped queue should throw the first element added after stopping", e == input[0]};
       }
       catch(...)
       {
-         failure("integers: caught wrong exception type (should be 'int')");
+         result << test::result{"caught wrong exception type (should be 'int')", false};
       }
+
+      return result;
    }
 }}}}
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// test interface ///
@@ -310,23 +280,11 @@ namespace mdt { namespace test { namespace pending_queue { namespace ints
 
 namespace mdt { namespace test { namespace pending_queue
 {
-   void all()
+   // run all pending queue tests
+   auto all() -> result
    {
-      // test the pending_queue with a bunch of strings
-      strings::all();
-
-      // test the pending_queue with a bunch of integers
-      ints::all();
-   }
-
-   auto passed() -> bool
-   {
-      return current_status;
-   }
-
-   auto results() -> std::list<result> const &
-   {
-      return current_results;
+      // create the base result then append the string and integer tests as children
+      return result{"pending_queue tests"} << strings::all() << ints::all();
    }
 }}}
 

@@ -4,38 +4,52 @@
 // std::string
 #include <string>
 
-#define make_string std::string()
-
-namespace mdt { namespace string
+namespace mdt
 {
-   template<typename T>
-   auto append(std::string &&s, T const &t) -> std::string &&
+   // append a C-string to an rvalue-std::string
+   auto operator<<(std::string &&s, char const *t) -> std::string &&;
+
+   // append a C-string to an lvalue-std::string
+   auto operator<<(std::string &s, char const *t) -> std::string &;
+
+   // append a std::string to an rvalue-std::string
+   auto operator<<(std::string &&s, std::string const &t) -> std::string &&;
+
+   // append a std::string to an lvalue-std::string
+   auto operator<<(std::string &s, std::string const &t) -> std::string &;
+
+   // append a character to an rvalue-std::string
+   auto operator<<(std::string &&s, char t) -> std::string &&;
+
+   // append a character to an lvalue-std::string
+   auto operator<<(std::string &s, char t) -> std::string &;
+
+   // append a character to an rvalue-std::string
+   auto operator<<(std::string &&s, uint8_t t) -> std::string &&;
+
+   // append a character to an lvalue-std::string
+   auto operator<<(std::string &s, uint8_t t) -> std::string &;
+
+   // append a generic type to an rvalue-std::string
+   template<typename T> auto operator<<(std::string &&s, T const &t) -> std::string &&
    {
       return std::move(s += std::to_string(t));
    }
 
-   template<> auto append<std::string>(std::string &&s, std::string const &t) -> std::string &&;
-
-   template<> auto append<char>(std::string &&s, char const &t) -> std::string &&;
-
-   template<> auto append<uint8_t>(std::string &&s, uint8_t const &t) -> std::string &&;
-}}
-
-namespace mdt
-{
-   template<typename T>
-   auto operator<<(std::string &&s, T const &t) -> std::string &&
+   // append a generic type to an lvalue-std::string
+   template<typename T> auto operator<<(std::string &s, T const &t) -> std::string &
    {
-      return string::append<T>(std::move(s), t);
+      return (s += std::to_string(t));
    }
-
-   auto operator<<(std::string &&s, char const *t) -> std::string &&;
 }
 
 #ifdef MDT_SELF_TEST
+#include "../test/results.hpp"
+
 namespace mdt { namespace test { namespace string
 {
-   void all();
+   // run all string tests
+   auto all() -> result;
 }}}
 #endif
 

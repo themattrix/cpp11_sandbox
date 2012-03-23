@@ -51,7 +51,7 @@
 namespace mdt
 {
    /**
-    * Thread-safe queue into which elements can be enqueued from any thread, but are processed sequentially by the thread's internal thread.
+    * Thread-safe queue into which elements can be enqueued from any thread, but are processed sequentially by the queue's internal thread.
     */
    template<class T>
    class pending_queue
@@ -85,7 +85,7 @@ namespace mdt
       // disallow copying via assignment operator
       public: class_type & operator=(class_type const &) = delete;
 
-      // move via move constructor
+      // move via move constructor; this is non-default because the mutex cannot be moved
       public: pending_queue(class_type &&other)
          :
          // copy the trivial types
@@ -93,9 +93,9 @@ namespace mdt
          paused{other.paused}
       {
          // swap the complex types
-         queue   .swap(other.queue);
+         queue.swap(other.queue);
          callback.swap(other.callback);
-         thread  .swap(other.thread);
+         thread.swap(other.thread);
       }
 
       // disallow move via assignment operator (because we don't offer an empty constructor)
@@ -282,22 +282,13 @@ namespace mdt
 ///                                                                                                                                               ///
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// std::list
-#include <list>
-
 // mdt::test::result
 #include "../test/results.hpp"
 
 namespace mdt { namespace test { namespace pending_queue
 {
    // run all pending_queue self-tests
-   void all();
-
-   // returns true if all tests run so far have passed
-   auto passed() -> bool;
-
-   // get the results of the run
-   auto results() -> std::list<result> const &;
+   auto all() -> result;
 }}}
 #endif
 
